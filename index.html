@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="tt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#ff8c42">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Handstand">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Handstand өйрәнәбез</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(160deg, #fff7e6 0%, #ffe9c9 100%);
+    color: #3a2e1a;
+    min-height: 100vh;
+    padding: 16px;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  header {
+    background: #ff8c42;
+    color: #fff;
+    border-radius: 20px;
+    padding: 22px 20px;
+    text-align: center;
+    box-shadow: 0 4px 14px rgba(255,140,66,.35);
+    margin-bottom: 16px;
+  }
+  header h1 { font-size: 1.7rem; margin-bottom: 6px; }
+  header p { font-size: 1rem; opacity: .95; }
+  .langbar { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
+  .langbar button {
+    border: 2px solid #fff;
+    background: transparent;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 8px 22px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .langbar button.active { background: #fff; color: #ff8c42; }
+  .video-box {
+    background: #fff;
+    border-radius: 20px;
+    padding: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.08);
+    margin-bottom: 16px;
+  }
+  .video-box h2 { font-size: 1.2rem; margin-bottom: 10px; text-align: center; }
+  .video-frame { position: relative; width: 100%; padding-bottom: 56.25%; border-radius: 12px; overflow: hidden; }
+  .video-frame iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+  .progress-box {
+    background: #fff;
+    border-radius: 20px;
+    padding: 14px 18px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.08);
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .progress-box .label { font-weight: 700; font-size: 1.05rem; margin-bottom: 8px; }
+  .bar { height: 16px; background: #f0e6d2; border-radius: 999px; overflow: hidden; }
+  .bar > div { height: 100%; width: 0%; background: linear-gradient(90deg, #7bc96f, #4caf50); border-radius: 999px; transition: width .3s; }
+  .done-msg { margin-top: 8px; font-size: 1.1rem; font-weight: 700; color: #4caf50; display: none; }
+  .card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 18px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.08);
+    border-left: 8px solid #ff8c42;
+  }
+  .card.done { border-left-color: #4caf50; background: #f6fff4; }
+  .card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .num {
+    flex: 0 0 auto;
+    width: 44px; height: 44px;
+    background: #ff8c42; color: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; font-weight: 800;
+  }
+  .card.done .num { background: #4caf50; }
+  .card h2 { font-size: 1.25rem; }
+  .target {
+    display: inline-block;
+    background: #fff3e0;
+    color: #e65100;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: .95rem;
+    margin-bottom: 10px;
+  }
+  .card ol { margin: 0 0 10px 22px; font-size: 1.02rem; line-height: 1.55; }
+  .tip {
+    background: #e8f5e9;
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: .95rem;
+    margin-bottom: 12px;
+  }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .btn {
+    border: none;
+    border-radius: 14px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    padding: 12px 20px;
+    cursor: pointer;
+  }
+  .btn-done { background: #4caf50; color: #fff; flex: 1; min-width: 170px; }
+  .card.done .btn-done { background: #c8e6c9; color: #2e7d32; }
+  .btn-timer { background: #42a5f5; color: #fff; }
+  .btn-timer.running { background: #ef5350; }
+  .timer-display { font-size: 1.6rem; font-weight: 800; min-width: 60px; text-align: center; }
+  footer { text-align: center; font-size: .9rem; color: #8a7a5c; padding: 18px 8px 30px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="t-title"></h1>
+    <p id="t-subtitle"></p>
+    <div class="langbar">
+      <button id="btn-tat" type="button">ТАТ</button>
+      <button id="btn-en" type="button">EN</button>
+    </div>
+  </header>
+
+  <div class="video-box">
+    <h2 id="t-video-title"></h2>
+    <div class="video-frame">
+      <iframe src="https://www.youtube.com/embed/aXDxa79u0xQ"
+              title="How to Handstand - Absolute Beginners to Pro"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen></iframe>
+    </div>
+  </div>
+
+  <div class="progress-box">
+    <div class="label" id="t-progress-label"></div>
+    <div class="bar"><div id="progress-fill"></div></div>
+    <div class="done-msg" id="t-done-msg"></div>
+  </div>
+
+  <div id="cards"></div>
+
+  <footer id="t-footer"></footer>
+</div>
+
+<script>
+"use strict";
+
+var STR = {
+  tat: {
+    title: "🤸 Handstand өйрәнәбез",
+    subtitle: "Самира өчен көнлек күнегүләр",
+    videoTitle: "🎬 Видео-дәрес",
+    progress: "Бүген эшләнде",
+    doneMsg: "🎉 Бүгенге барысы да эшләнде! Молодец!",
+    doneBtn: "Эшләдем ✓",
+    undoBtn: "Кире ал ↩",
+    timerBtn: "⏱ Таймер",
+    timerStop: "⏹ Туктат",
+    footer: "Олы кеше күзәтүендә эшлә! Йомшак өслектә, дивар янында, алда мендәр белән.",
+    sec: "сек",
+    times: "тапкыр"
+  },
+  en: {
+    title: "🤸 Learning the Handstand",
+    subtitle: "Daily exercises for Samira",
+    videoTitle: "🎬 Video lesson",
+    progress: "Completed today",
+    doneMsg: "🎉 All done for today! Well done!",
+    doneBtn: "Done ✓",
+    undoBtn: "Undo ↩",
+    timerBtn: "⏱ Timer",
+    timerStop: "⏹ Stop",
+    footer: "Practise with an adult nearby! On a soft surface, near a wall, with a pillow in front.",
+    sec: "sec",
+    times: "times"
+  }
+};
+
+var EXERCISES = [
+  {
+    seconds: 20,
+    name: { tat: "Бака торышы", en: "Frog stand" },
+    target: { tat: "Максат: 20 сек тоту", en: "Goal: hold 20 sec" },
+    steps: {
+      tat: ["Терсәкләреңне тезләреңнең эченә куй.", "Алга таба селкенеп, авырлыкны кулларыңа күчер.", "Башыңны саклау өчен алга мендәр куй.", "Җиңел тоелгач, аяк очларыңны чиратлап күтәр."],
+      en: ["Place your elbows inside your knees.", "Rock forward, shifting your weight onto your hands.", "Put a pillow in front to protect your head.", "When it feels easy, lift one foot at a time."]
+    },
+    tip: { tat: "💡 Кулларың белән идәнне «тырнаган» кебек тот — бармакларың белән баланс тот.", en: "💡 Grip the floor as if scratching it — balance with your fingers." }
+  },
+  {
+    seconds: 20,
+    name: { tat: "Пайк тоту", en: "Pike hold" },
+    target: { tat: "Максат: 20 сек тоту", en: "Goal: hold 20 sec" },
+    steps: {
+      tat: ["Кулларыңны туры тот, иңбашларың колакларың өстендә булсын.", "Аякларыңны кулларыңа таба якынайт.", "Эчеңне кыс, аркаңны туры тот."],
+      en: ["Keep your arms straight, shoulders over your ears.", "Walk your feet closer to your hands.", "Tighten your core, keep your back flat."]
+    },
+    tip: { tat: "💡 Авырлаштыру өчен аякларыңны өскәрәк күтәр (урындыкка).", en: "💡 To make it harder, raise your feet higher (onto a chair)." }
+  },
+  {
+    seconds: 20,
+    name: { tat: "Баш торышы", en: "Headstand" },
+    target: { tat: "Максат: 20 сек тоту", en: "Goal: hold 20 sec" },
+    steps: {
+      tat: ["Кулларыңны күз тигезлегендә, бераз читкә куй.", "Башыңны мендәргә куй, дивар янында эшлә.", "Башта тезләрне бөкләп тор, аннары аякларны әкрен ач.", "Аяк очларын суз, ботларыңны кыс."],
+      en: ["Place your hands at eye level, slightly turned out.", "Rest your head on a pillow, practise near a wall.", "Start tucked, then slowly extend your legs.", "Point your toes, squeeze your thighs."]
+    },
+    tip: { tat: "💡 Аякларны берәм-берәм ач — башта бер, аннары икенче.", en: "💡 Extend one leg at a time — first one, then the other." }
+  },
+  {
+    seconds: 30,
+    name: { tat: "Дивар янында тору", en: "Wall handstand" },
+    target: { tat: "Максат: 30 сек тоту", en: "Goal: hold 30 sec" },
+    steps: {
+      tat: ["Йөзең белән диварга карап бас.", "Кулларыңны җиргә куй, аякларың белән диварга менеп бар.", "Күкрәгең диварга якын булсын.", "Тәнеңне турайт: иңбашлар өстә, эч кысылган, аяклар бергә."],
+      en: ["Face the wall.", "Place your hands on the floor and walk your feet up the wall.", "Bring your chest close to the wall.", "Straighten your body: shoulders up, core tight, legs together."]
+    },
+    tip: { tat: "💡 Карашың — имән бармакларың арасына, башны артка ташлама.", en: "💡 Look between your index fingers, don't throw your head back." }
+  },
+  {
+    seconds: null,
+    name: { tat: "Тибеп менү", en: "Kick-up practice" },
+    target: { tat: "Һәр аяк белән 5әр тапкыр", en: "5 times with each leg" },
+    steps: {
+      tat: ["Дивар янында бас.", "Бер аягың белән җиңелчә тибеп мен, икенче аяк иярсен.", "Артык каты тибмә — диварга бәрелмә.", "Икенче аяк белән кабатла."],
+      en: ["Stand facing the wall.", "Kick up gently with one leg, the other follows.", "Don't kick too hard — avoid hitting the wall.", "Repeat with the other leg."]
+    },
+    tip: { tat: "💡 Тотканда кычкырып 1дән 10га кадәр сана — сулыш онытылмас.", en: "💡 Count out loud from 1 to 10 while holding — so you keep breathing." }
+  },
+  {
+    seconds: 20,
+    name: { tat: "Эч кысып тоту", en: "Hollow body hold" },
+    target: { tat: "Максат: 20 сек тоту", en: "Goal: hold 20 sec" },
+    steps: {
+      tat: ["Аркаң белән идәнгә ят, билеңне идәнгә кысып тот.", "Иңбашларыңны һәм аякларыңны идәннән күтәр.", "Кулларыңны баш артына суз.", "Авыр булса — тезләрне бөклә."],
+      en: ["Lie on your back, press your lower back into the floor.", "Lift your shoulders and legs off the floor.", "Stretch your arms behind your head.", "If it's hard — bend your knees."]
+    },
+    tip: { tat: "💡 Бу күнегү «банан арка» хатасын төзәтә.", en: "💡 This drill fixes the \"banana back\" mistake." }
+  },
+  {
+    seconds: null,
+    name: { tat: "Иңбашка тукылдату", en: "Shoulder taps" },
+    target: { tat: "10 тапкыр (5+5)", en: "10 taps (5+5)" },
+    steps: {
+      tat: ["Пайк торышында яки дивар янында тор.", "Бер кулың белән каршы иңбашыңа тукылдат.", "Тәнеңне селкетмәскә тырыш.", "Икенче кул белән кабатла."],
+      en: ["Get into a pike hold or wall handstand.", "Tap the opposite shoulder with one hand.", "Try not to rock your body.", "Repeat with the other hand."]
+    },
+    tip: { tat: "💡 Бер якка авышсаң — шул якны ныграк эшлә.", en: "💡 If you tip to one side — work that side more." }
+  },
+  {
+    seconds: null,
+    name: { tat: "Куркынычсыз төшү", en: "Safe bail-out" },
+    target: { tat: "5 тапкыр кабатла", en: "Repeat 5 times" },
+    steps: {
+      tat: ["Дивар янында handstand торышына бас.", "Ян ягыңа авыша башла.", "Бер кулыңны җирдә тот — аякларың җиргә тигәнче күтәрмә.", "Арба тәгәрмәче кебек әйләнеп төш."],
+      en: ["Get into a handstand near the wall.", "Start tipping to one side.", "Keep one hand on the floor until your feet touch down.", "Cartwheel out of the handstand."]
+    },
+    tip: { tat: "💡 Моны белгәч, егылу куркыныч булмый!", en: "💡 Once you know this, falling isn't scary!" }
+  }
+];
+
+var lang = localStorage.getItem("samira-hs-lang") || "tat";
+if (lang !== "tat" && lang !== "en") lang = "tat";
+
+function todayKey() {
+  var d = new Date();
+  var m = ("0" + (d.getMonth() + 1)).slice(-2);
+  var day = ("0" + d.getDate()).slice(-2);
+  return "samira-hs-done-" + d.getFullYear() + "-" + m + "-" + day;
+}
+function loadDone() {
+  try { return JSON.parse(localStorage.getItem(todayKey())) || []; }
+  catch (e) { return []; }
+}
+function saveDone(arr) {
+  localStorage.setItem(todayKey(), JSON.stringify(arr));
+}
+
+var doneList = loadDone();
+var timers = {};
+
+function t(key) { return STR[lang][key]; }
+
+function render() {
+  document.documentElement.lang = (lang === "tat") ? "tt" : "en";
+  document.getElementById("t-title").textContent = t("title");
+  document.getElementById("t-subtitle").textContent = t("subtitle");
+  document.getElementById("t-video-title").textContent = t("videoTitle");
+  document.getElementById("t-footer").textContent = t("footer");
+  document.getElementById("btn-tat").classList.toggle("active", lang === "tat");
+  document.getElementById("btn-en").classList.toggle("active", lang === "en");
+
+  var box = document.getElementById("cards");
+  box.innerHTML = "";
+  EXERCISES.forEach(function (ex, i) {
+    var card = document.createElement("div");
+    card.className = "card" + (doneList.indexOf(i) !== -1 ? " done" : "");
+
+    var top = document.createElement("div");
+    top.className = "card-top";
+    var num = document.createElement("div");
+    num.className = "num";
+    num.textContent = (i + 1);
+    var h = document.createElement("h2");
+    h.textContent = ex.name[lang];
+    top.appendChild(num);
+    top.appendChild(h);
+    card.appendChild(top);
+
+    var tg = document.createElement("div");
+    tg.className = "target";
+    tg.textContent = "🎯 " + ex.target[lang];
+    card.appendChild(tg);
+
+    var ol = document.createElement("ol");
+    ex.steps[lang].forEach(function (s) {
+      var li = document.createElement("li");
+      li.textContent = s;
+      ol.appendChild(li);
+    });
+    card.appendChild(ol);
+
+    var tip = document.createElement("div");
+    tip.className = "tip";
+    tip.textContent = ex.tip[lang];
+    card.appendChild(tip);
+
+    var actions = document.createElement("div");
+    actions.className = "actions";
+
+    var doneBtn = document.createElement("button");
+    doneBtn.type = "button";
+    doneBtn.className = "btn btn-done";
+    doneBtn.textContent = (doneList.indexOf(i) !== -1) ? t("undoBtn") : t("doneBtn");
+    doneBtn.onclick = function () { toggleDone(i); };
+    actions.appendChild(doneBtn);
+
+    if (ex.seconds) {
+      var timerBtn = document.createElement("button");
+      timerBtn.type = "button";
+      timerBtn.className = "btn btn-timer";
+      timerBtn.id = "timer-btn-" + i;
+      timerBtn.textContent = t("timerBtn");
+      timerBtn.onclick = function () { toggleTimer(i); };
+      actions.appendChild(timerBtn);
+
+      var disp = document.createElement("div");
+      disp.className = "timer-display";
+      disp.id = "timer-disp-" + i;
+      disp.textContent = ex.seconds;
+      actions.appendChild(disp);
+    }
+
+    card.appendChild(actions);
+    box.appendChild(card);
+  });
+
+  updateProgress();
+}
+
+function toggleDone(i) {
+  var k = doneList.indexOf(i);
+  if (k === -1) doneList.push(i);
+  else doneList.splice(k, 1);
+  saveDone(doneList);
+  render();
+}
+
+function updateProgress() {
+  var n = EXERCISES.length;
+  var d = doneList.length;
+  document.getElementById("t-progress-label").textContent = t("progress") + ": " + d + "/" + n;
+  document.getElementById("progress-fill").style.width = (n ? (d / n * 100) : 0) + "%";
+  document.getElementById("t-done-msg").style.display = (d === n && n > 0) ? "block" : "none";
+  document.getElementById("t-done-msg").textContent = t("doneMsg");
+}
+
+function toggleTimer(i) {
+  var btn = document.getElementById("timer-btn-" + i);
+  var disp = document.getElementById("timer-disp-" + i);
+  if (timers[i]) {
+    clearInterval(timers[i]);
+    timers[i] = null;
+    btn.textContent = t("timerBtn");
+    btn.classList.remove("running");
+    disp.textContent = EXERCISES[i].seconds;
+    return;
+  }
+  var s = EXERCISES[i].seconds;
+  btn.textContent = t("timerStop");
+  btn.classList.add("running");
+  disp.textContent = s;
+  timers[i] = setInterval(function () {
+    s--;
+    if (s <= 0) {
+      clearInterval(timers[i]);
+      timers[i] = null;
+      btn.textContent = t("timerBtn");
+      btn.classList.remove("running");
+      disp.textContent = "✓";
+    } else {
+      disp.textContent = s;
+    }
+  }, 1000);
+}
+
+document.getElementById("btn-tat").onclick = function () {
+  lang = "tat";
+  localStorage.setItem("samira-hs-lang", lang);
+  render();
+};
+document.getElementById("btn-en").onclick = function () {
+  lang = "en";
+  localStorage.setItem("samira-hs-lang", lang);
+  render();
+};
+
+render();
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("sw.js").catch(function () {});
+  });
+}
+</script>
+</body>
+</html>
